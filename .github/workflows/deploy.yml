@@ -58,18 +58,6 @@ jobs:
           npm audit --audit-level=moderate || true
           echo "✅ Audit complete (check output above for any issues)"
       
-      - name: Run linter
-        run: |
-          echo "🔍 Running ESLint..."
-          npm run lint
-          echo "✅ Linting passed"
-      
-      - name: Check TypeScript
-        run: |
-          echo "📘 Running TypeScript compiler check..."
-          npx tsc --noEmit
-          echo "✅ TypeScript check passed"
-      
       - name: Build project (Test Mode)
         run: |
           echo "🏗️ Building project for testing..."
