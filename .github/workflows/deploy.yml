@@ -14,6 +14,7 @@ concurrency:
 jobs:
   test:
     name: Run Tests & Checks
+    environment: production
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -89,7 +90,8 @@ jobs:
 
   deploy:
     name: Deploy to VPS (PM2)
-    needs: test  # Wait for tests to pass
+    needs: test  # Wait for tests to pas
+    environment: productions
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'  # Only deploy on main branch
     
