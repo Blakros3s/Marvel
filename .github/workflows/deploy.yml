@@ -63,7 +63,12 @@ jobs:
           echo "🏗️ Building project for testing..."
           npm run build
           echo "✅ Build successful"
-      
+
+      - name: Test SSH connectivity
+        run: |
+          echo "Testing SSH connectivity..."
+          nc -vz ${{ secrets.VPS_HOST }} ${{ secrets.VPS_PORT }} || echo "Cannot reach VPS on port"
+
       - name: Test Complete
         run: |
           echo "==================================="
