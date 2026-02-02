@@ -19,7 +19,6 @@ This workflow automatically **tests** and **deploys** your site to your VPS with
 ## Prerequisites on VPS
 
 Before using GitHub Actions, make sure your VPS is set up:
-
 ```bash
 # 1. Install Node.js 20
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
