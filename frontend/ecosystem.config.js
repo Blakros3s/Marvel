@@ -4,7 +4,7 @@ module.exports = {
       name: 'frontend',
       script: 'npm',
       args: 'start',
-      cwd: '/srv/marvel/frontend',
+      cwd: './',
       instances: 1,
       autorestart: true,
       watch: false,

@@ -79,10 +79,10 @@ jobs:
             echo "🔄 Restarting PM2 application..."
             if pm2 list | grep -q "frontend"; then
               echo "Reloading existing PM2 process..."
-              pm2 reload frontend/ecosystem.config.js --update-env
+              pm2 reload ecosystem.config.js --update-env
             else
               echo "Starting new PM2 process..."
-              pm2 start frontend/ecosystem.config.js
+              pm2 start ecosystem.config.js
             fi
             
             echo "💾 Saving PM2 configuration..."
