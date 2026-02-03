@@ -3,53 +3,91 @@ name: Test & Deploy to VPS (PM2 Mode)
 on:
   push:
     branches: [main]
-  workflow_dispatch:
+  workflow_dispatch:   # Manual trigger button
 
 jobs:
-  deploy:
+  test:
+    name: Run Tests & Checks
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Test SSH connectivity
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies & Build
         run: |
-          nc -vz ${{ secrets.VPS_HOST }} ${{ secrets.VPS_PORT }} || echo "Cannot reach VPS"
+          echo "📦 Installing npm dependencies..."
+          npm ci
+          echo "🏗️ Building project..."
+          npm run build
+          echo "✅ Test build complete"
 
-      - name: Deploy to VPS
+      - name: Test SSH login
         uses: appleboy/ssh-action@v1.0.3
         with:
-            host: ${{ secrets.SSH_HOST }}
-            username: ${{ secrets.SSH_USER }}
-            key: ${{ secrets.SSH_KEY }}
-            passphrase: ${{ secrets.PASSPHRASE }}
-            port: ${{ secrets.SSH_PORT }}
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          passphrase: ${{ secrets.SSH_PASSPHRASE }}
+          port: ${{ secrets.SSH_PORT }}
+          script: echo "✅ SSH login successful"
+
+  deploy:
+    name: Deploy to VPS (PM2)
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Deploy & Restart PM2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          passphrase: ${{ secrets.SSH_PASSPHRASE }}
+          port: ${{ secrets.SSH_PORT }}
           script: |
-            echo "🚀 Deploying frontend on VPS..."
-            cd /srv/marvel/frontend || exit 1
-
-            # Pull latest code
-            git fetch origin main
-            git reset --hard origin/main
-
-            # Install dependencies
+            set -e  # Exit on error
+            
+            echo "📂 Navigating to project directory..."
+            cd /srv/marvel || exit 1
+            
+            echo "🔄 Resetting any local changes..."
+            git reset --hard HEAD
+            git clean -fd
+            
+            echo "📥 Pulling latest code..."
+            git pull origin main
+            
+            echo "📂 Entering frontend directory..."
+            cd frontend || exit 1
+            
+            echo "📦 Installing dependencies..."
             npm ci
-
-            # Build frontend
+            
+            echo "🏗️ Building application..."
             npm run build
-
-            # Reload PM2 process safely
+            
+            echo "🔄 Restarting PM2 application..."
             if pm2 list | grep -q "frontend"; then
-              echo "♻️  Reloading frontend process with PM2..."
-              pm2 reload frontend
+              echo "Reloading existing PM2 process..."
+              pm2 reload ecosystem.config.js --update-env
             else
-              echo "▶️  Starting frontend process with PM2..."
-              pm2 start npm --name frontend -- start
+              echo "Starting new PM2 process..."
+              pm2 start ecosystem.config.js
             fi
-
-            # Save PM2 config
+            
+            echo "💾 Saving PM2 configuration..."
             pm2 save
-
-            echo "✅ Deployment complete!"
+            
+            echo "📊 Current PM2 status:"
             pm2 list
+            pm2 info frontend
