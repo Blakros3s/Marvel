@@ -7,7 +7,7 @@ env:
   SSH_HOST: ${{ secrets.SSH_HOST }}
   SSH_USER: ${{ secrets.SSH_USER }}
   SSH_KEY: ${{ secrets.SSH_KEY }}
-  PASSPHRASE: ${{ secrets.VPS_SSH_PASSPHRASE }}
+  PASSPHRASE: ${{ secrets.SSH_PASSPHRASE }}
   SSH_PORT: ${{ secrets.SSH_PORT }}
 
 jobs:
