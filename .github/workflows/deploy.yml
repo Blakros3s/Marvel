@@ -34,5 +34,5 @@ jobs:
               if [ -z "$INPUT_HOST" ]; then
                 echo "❌ HOST is EMPTY"
               else
-    echo "✅ HOST is PRESENT"
-  fi
+              echo "✅ HOST is PRESENT"
+              fi
