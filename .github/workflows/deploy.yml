@@ -1,38 +1,43 @@
-name: SSH Login Test
+name: SSH Secrets Sanity Check
 
 on:
-  workflow_dispatch:   # manual trigger (best for debugging)
+  workflow_dispatch:   # manual trigger
 
 jobs:
-  ssh-test:
+  ssh-secrets-test:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Test SSH login only
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          port: ${{ secrets.VPS_PORT }}
-          debug: true
-          script: |
-            script: |
-              if [ -z "$INPUT_KEY" ]; then
-                echo "❌ SSH KEY is EMPTY"
-              else
-                echo "✅ SSH KEY is PRESENT"
-                echo "Key length: ${#INPUT_KEY}"
-              fi
-            
-              if [ -z "$INPUT_USERNAME" ]; then
-                echo "❌ USERNAME is EMPTY"
-              else
-                echo "✅ USERNAME is PRESENT"
-              fi
-            
-              if [ -z "$INPUT_HOST" ]; then
-                echo "❌ HOST is EMPTY"
-              else
-              echo "✅ HOST is PRESENT"
-              fi
+      - name: Check SSH secrets presence
+        run: |
+          echo "🔍 Checking secrets..."
+
+          if [ -z "$VPS_SSH_KEY" ]; then
+            echo "❌ VPS_SSH_KEY is EMPTY"
+          else
+            echo "✅ VPS_SSH_KEY is PRESENT"
+            echo "Key length: ${#VPS_SSH_KEY}"
+          fi
+
+          if [ -z "$VPS_USER" ]; then
+            echo "❌ VPS_USER is EMPTY"
+          else
+            echo "✅ VPS_USER is PRESENT"
+          fi
+
+          if [ -z "$VPS_HOST" ]; then
+            echo "❌ VPS_HOST is EMPTY"
+          else
+            echo "✅ VPS_HOST is PRESENT"
+          fi
+
+          if [ -z "$VPS_PORT" ]; then
+            echo "❌ VPS_PORT is EMPTY"
+          else
+            echo "✅ VPS_PORT is PRESENT"
+          fi
+        env:
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_PORT: ${{ secrets.VPS_PORT }}
