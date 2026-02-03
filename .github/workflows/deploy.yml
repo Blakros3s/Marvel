@@ -17,10 +17,22 @@ jobs:
           port: ${{ secrets.VPS_PORT }}
           debug: true
           script: |
-            echo "✅ SSH CONNECTED"
-            echo "User:"
-            whoami
-            echo "Host:"
-            hostname
-            echo "Uptime:"
-            uptime
+            script: |
+              if [ -z "$INPUT_KEY" ]; then
+                echo "❌ SSH KEY is EMPTY"
+              else
+                echo "✅ SSH KEY is PRESENT"
+                echo "Key length: ${#INPUT_KEY}"
+              fi
+            
+              if [ -z "$INPUT_USERNAME" ]; then
+                echo "❌ USERNAME is EMPTY"
+              else
+                echo "✅ USERNAME is PRESENT"
+              fi
+            
+              if [ -z "$INPUT_HOST" ]; then
+                echo "❌ HOST is EMPTY"
+              else
+    echo "✅ HOST is PRESENT"
+  fi
