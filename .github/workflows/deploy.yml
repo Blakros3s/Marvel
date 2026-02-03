@@ -59,8 +59,7 @@ jobs:
             cd /srv/marvel || exit 1
 
             # Pull latest code
-            git fetch origin main
-            git reset --hard origin/main
+            git pull
 
             cd frontend || exit 1
             npm ci
