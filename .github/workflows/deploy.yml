@@ -7,39 +7,74 @@ on:
 
 jobs:
   test:
-    name: Run Tests & Checks
+    name: Run Tests & Build
     runs-on: ubuntu-latest
+
     defaults:
       run:
         working-directory: frontend
 
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
-
-      - name: Install dependencies & Build
-        run: |
-          echo "📦 Installing npm dependencies..."
-          npm ci
-          echo "🏗️ Building project..."
-          npm run build
-          echo "✅ Test build complete"
-
       - name: Test SSH login
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           passphrase: ${{ secrets.SSH_PASSPHRASE }}
           port: ${{ secrets.SSH_PORT }}
-          timeout: 30s
+          timeout: 20s
           script: echo "✅ SSH login successful"
+          
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies & build (with logs)
+        run: |
+          set -e
+          mkdir -p logs
+
+          {
+            echo "======================================"
+            echo "🧪 TEST JOB STARTED"
+            echo "📅 Time: $(date)"
+            echo "======================================"
+
+            echo "📦 Installing dependencies..."
+            npm ci
+
+            echo "🏗️ Building project..."
+            npm run build
+
+            echo "✅ Build successful"
+
+            echo "======================================"
+            echo "🧪 TEST JOB FINISHED"
+            echo "📅 Time: $(date)"
+            echo "======================================"
+          } | tee logs/test.log
+
+      - name: Upload test log artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-log
+          path: frontend/logs/test.log
+
+      - name: Add test log to job summary
+        if: always()
+        run: |
+          echo "## 🧪 Test Job Log (last 50 lines)" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          tail -n 50 logs/test.log >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
 
   deploy:
     name: Deploy to VPS (PM2)
@@ -48,8 +83,8 @@ jobs:
     if: github.ref == 'refs/heads/main'
 
     steps:
-      - name: Deploy & Restart PM2
-        uses: appleboy/ssh-action@v1.0.3
+      - name: Deploy & restart PM2 (with server logs)
+        uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
@@ -58,14 +93,19 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           script: |
             set -e
+            mkdir -p /srv/logs/marvel
             exec > /srv/logs/marvel/deploy.log 2>&1
-            echo "📅 Deployment started at $(date)"
 
-            cd /srv/marvel || exit 1
+            echo "======================================"
+            echo "🚀 DEPLOYMENT STARTED"
+            echo "📅 Time: $(date)"
+            echo "======================================"
+
+            cd /srv/marvel
             git reset --hard HEAD
             git pull origin main
 
-            cd frontend || exit 1
+            cd frontend
             npm ci
             npm run build
 
@@ -76,27 +116,15 @@ jobs:
             fi
 
             pm2 save
-            pm2 list
-            pm2 info frontend
 
-            echo "📅 Deployment finished at $(date)"
+            echo "======================================"
+            echo "🚀 DEPLOYMENT FINISHED"
+            echo "📅 Time: $(date)"
+            echo "======================================"
 
-      - name: Pull deployment log from VPS
-        run: |
-          mkdir -p /tmp
-          ssh -i <(echo "${{ secrets.SSH_KEY }}") \
-              -p ${{ secrets.SSH_PORT }} \
-              -o StrictHostKeyChecking=no \
-              ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
-              "cat /srv/logs/marvel/deploy.log" > /tmp/deploy.log
-
-      - name: Upload deployment log
+      - name: Upload deployment log (placeholder)
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: deployment-log
-          path: /tmp/deploy.log
-          if-no-files-found: warn
-          compression-level: 6
-          overwrite: false
-          include-hidden-files: false
+          name: deploy-log
+          path: /tmp/nonexistent || true
