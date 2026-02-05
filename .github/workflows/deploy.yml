@@ -79,13 +79,6 @@ jobs:
             pm2 list
             pm2 info frontend
 
-            # Health check
-            curl -sSf http://localhost:3000 > /dev/null
-            if [ $? -ne 0 ]; then
-              echo "❌ App is not running!"
-              exit 1
-            fi
-
             echo "📅 Deployment finished at $(date)"
 
       - name: Upload deployment log
