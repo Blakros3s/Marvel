@@ -15,6 +15,7 @@ jobs:
 
     steps:
       - name: Test SSH login with retries (passphrase protected key)
+        working-directory: .
         run: |
           echo "🔑 Setting up SSH key..."
           mkdir -p ~/.ssh
