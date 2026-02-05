@@ -58,7 +58,7 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           script: |
             set -e
-            exec > /srv/marvel/deploy.log 2>&1
+            exec > /srv/logs/marvel/deploy.log 2>&1
             echo "📅 Deployment started at $(date)"
 
             cd /srv/marvel || exit 1
