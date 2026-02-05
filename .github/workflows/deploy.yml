@@ -3,7 +3,7 @@ name: Test & Deploy to VPS (PM2 Mode)
 on:
   push:
     branches: [main]
-  workflow_dispatch:   # Manual trigger button
+  workflow_dispatch:
 
 jobs:
   test:
@@ -38,6 +38,7 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           passphrase: ${{ secrets.SSH_PASSPHRASE }}
           port: ${{ secrets.SSH_PORT }}
+          timeout: 30s
           script: echo "✅ SSH login successful"
 
   deploy:
@@ -45,6 +46,7 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
+
     steps:
       - name: Deploy & Restart PM2
         uses: appleboy/ssh-action@v1.0.3
@@ -55,39 +57,40 @@ jobs:
           passphrase: ${{ secrets.SSH_PASSPHRASE }}
           port: ${{ secrets.SSH_PORT }}
           script: |
-            set -e  # Exit on error
-            
-            echo "📂 Navigating to project directory..."
+            set -e
+            exec > /srv/marvel/deploy.log 2>&1
+            echo "📅 Deployment started at $(date)"
+
             cd /srv/marvel || exit 1
-            
-            echo "🔄 Resetting any local changes..."
             git reset --hard HEAD
-            git clean -fd
-            
-            echo "📥 Pulling latest code..."
             git pull origin main
-            
-            echo "📂 Entering frontend directory..."
+
             cd frontend || exit 1
-            
-            echo "📦 Installing dependencies..."
             npm ci
-            
-            echo "🏗️ Building application..."
             npm run build
-            
-            echo "🔄 Restarting PM2 application..."
+
             if pm2 list | grep -q "frontend"; then
-              echo "Reloading existing PM2 process..."
               pm2 reload ecosystem.config.js --update-env
             else
-              echo "Starting new PM2 process..."
               pm2 start ecosystem.config.js
             fi
-            
-            echo "💾 Saving PM2 configuration..."
+
             pm2 save
-            
-            echo "📊 Current PM2 status:"
             pm2 list
             pm2 info frontend
+
+            # Health check
+            curl -sSf http://localhost:3000 > /dev/null
+            if [ $? -ne 0 ]; then
+              echo "❌ App is not running!"
+              exit 1
+            fi
+
+            echo "📅 Deployment finished at $(date)"
+
+      - name: Upload deployment log
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: deployment-log
+          path: /srv/marvel/deploy.log
