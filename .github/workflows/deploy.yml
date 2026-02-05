@@ -14,6 +14,27 @@ jobs:
         working-directory: frontend
 
     steps:
+      - name: Test SSH login with retries (passphrase protected key)
+        run: |
+          echo "🔑 Setting up SSH key..."
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
+          echo "🔑 Starting ssh-agent and adding key with passphrase..."
+          eval "$(ssh-agent -s)"
+          # Feed both the key and the passphrase into ssh-add
+          echo "${{ secrets.SSH_PASSPHRASE }}" | SSH_ASKPASS=/bin/cat ssh-add ~/.ssh/id_rsa
+
+          echo "🔑 Testing SSH login..."
+          for i in 1 2 3; do
+            ssh -o StrictHostKeyChecking=no \
+                -p ${{ secrets.SSH_PORT }} \
+                ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "echo ✅ SSH login successful" && break
+            echo "❌ Attempt $i failed, retrying in 5s..."
+            sleep 5
+          done
+
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
