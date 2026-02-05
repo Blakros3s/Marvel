@@ -1,7 +1,7 @@
 module.exports = {
   apps: [
     {
-      name: 'frontend',
+      name: 'marvel-frontend',
       script: 'npm',
       args: 'start',
       cwd: './',
@@ -14,9 +14,9 @@ module.exports = {
         PORT: 3006,
       },
       // Logging
-      log_file: '/home/blak_ros3s/.pm2/logs/frontend.log',
-      out_file: '/home/blak_ros3s/.pm2/logs/frontend-out.log',
-      error_file: '/home/blak_ros3s/.pm2/logs/frontend-error.log',
+      log_file: '/home/blak_ros3s/.pm2/logs/marvel-frontend.log',
+      out_file: '/home/blak_ros3s/.pm2/logs/marvel-frontend-out.log',
+      error_file: '/home/blak_ros3s/.pm2/logs/marvel-frontend-error.log',
       log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
       merge_logs: true,
       // Performance

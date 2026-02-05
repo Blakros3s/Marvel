@@ -78,12 +78,16 @@ jobs:
           script: |
             set -e  # Exit on error
             
+            # Redirect all output to the deployment log
+            exec > /srv/logs/marvel/deploy.log 2>&1
+            
+            echo "📅 Deployment started at $(date)"
+            
             echo "📂 Navigating to project directory..."
             cd /srv/marvel || exit 1
             
             echo "🔄 Resetting any local changes..."
             git reset --hard HEAD
-            git clean -fd
             
             echo "📥 Pulling latest code..."
             git pull origin main
@@ -98,7 +102,7 @@ jobs:
             npm run build
             
             echo "🔄 Restarting PM2 application..."
-            if pm2 list | grep -q "frontend"; then
+            if pm2 list | grep -q "marvel-frontend"; then
               echo "Reloading existing PM2 process..."
               pm2 reload ecosystem.config.js --update-env
             else
@@ -111,4 +115,4 @@ jobs:
             
             echo "📊 Current PM2 status:"
             pm2 list
-            pm2 info frontend
+            pm2 info marvel-frontend
